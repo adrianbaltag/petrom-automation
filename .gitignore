@@ -15,8 +15,8 @@ samples/
 config.ini
 .env
 
-# Project checks' own files
-.claude/state/
+# Personal Claude Code tooling (project checks settings and logs)
+.claude/
 
 # Release zips
 dist/
