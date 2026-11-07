@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 
 from petrom_dashboard import automation
+from petrom_dashboard import dashboard as table  # "dashboard" is also the page's view name
 from petrom_dashboard.db import connect, init_db
 from petrom_dashboard.paths import default_data_dir
 from petrom_dashboard.setup_logging import setup_logging
@@ -17,6 +18,7 @@ UNEXPECTED_RUN_ERROR = (
     "Automatizarea s-a oprit din cauza unei erori neașteptate (detalii în jurnal)."
 )
 REFUSED = "Cerere refuzată: nu vine din dashboard."
+DATA_FAILED = "Nu am putut citi datele (detalii în jurnal)."
 
 # The only names the dashboard is opened with. Another name means a website pointing its
 # own name at this computer (DNS rebinding), so it is refused.
@@ -64,6 +66,18 @@ def create_app(test_config=None):
     @app.route("/")
     def dashboard():
         return render_template("index.html")
+
+    @app.get("/date")
+    def date_luna():
+        """This month's rows as JSON. The page reads it on load and after each run."""
+        luna = table.current_month()
+        try:
+            with closing(connect(app.config["DATABASE"])) as conn:
+                rows = table.month_rows(conn, luna)
+        except Exception:
+            logger.exception("Could not read the dashboard rows for %s", luna)
+            return jsonify(ok=False, mesaj=DATA_FAILED), 500
+        return jsonify(ok=True, luna=luna, luna_text=table.month_label(luna), firme=rows)
 
     @app.post("/ruleaza")
     def ruleaza():

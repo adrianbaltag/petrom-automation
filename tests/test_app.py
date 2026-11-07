@@ -116,3 +116,40 @@ def test_request_with_a_foreign_host_name_is_refused(client):
     # DNS rebinding: a website whose name points at 127.0.0.1 would send its own name.
     assert client.get("/", base_url="http://evil.example").status_code == 403
     assert client.get("/", base_url="http://127.0.0.1:8765").status_code == 200
+
+
+def test_date_returns_this_months_rows(app, client, monkeypatch):
+    from db_helpers import open_db
+
+    from petrom_dashboard import dashboard
+
+    monkeypatch.setattr(dashboard, "current_month", lambda: "2026-11")
+    with open_db(app.config["DATABASE"]) as conn:
+        conn.execute("INSERT INTO firme (id, cui, nume) VALUES (1, '111', 'ALFA SRL')")
+        conn.execute("INSERT INTO limite VALUES (1, '2026-11', 100000)")
+
+    response = client.get("/date")
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["luna"] == "2026-11"
+    assert body["luna_text"] == "noiembrie 2026"
+    assert [row["cui"] for row in body["firme"]] == ["111"]
+    assert body["firme"][0]["max_text"] == "1.000,00 lei"
+
+
+def test_date_reports_a_database_failure(app, client, monkeypatch):
+    import sqlite3
+
+    from petrom_dashboard import dashboard
+
+    def broken(conn, luna):
+        raise sqlite3.OperationalError("disk I/O error")
+
+    monkeypatch.setattr(dashboard, "month_rows", broken)
+
+    response = client.get("/date")
+
+    assert response.status_code == 500
+    assert response.get_json()["ok"] is False
+    assert "jurnal" in response.get_json()["mesaj"]

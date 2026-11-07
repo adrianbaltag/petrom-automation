@@ -71,3 +71,10 @@ def _parse_whole_lei(part, forbidden_sep, original):
     if not all(len(group) == 3 and group.isdigit() for group in rest):
         raise AmountError(f"thousands groups must have 3 digits in amount: {original!r}")
     return int("".join(groups))
+
+
+def format_lei(bani, suffix=True):
+    """Show whole bani the Romanian way: 123456 -> '1.234,56 lei'."""
+    lei, rest = divmod(bani, 100)
+    text = f"{lei:,}".replace(",", ".") + f",{rest:02d}"
+    return f"{text} lei" if suffix else text

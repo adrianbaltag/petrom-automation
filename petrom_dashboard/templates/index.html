@@ -9,9 +9,49 @@
 <body>
   <header class="topbar">
     <h1>Petrom Dashboard</h1>
+    <span id="luna" class="luna"></span>
+    <input id="cautare" class="cautare" type="search" placeholder="Caută firmă sau CUI"
+           aria-label="Caută firmă sau CUI" autocomplete="off">
+    <span class="spatiu"></span>
+    <span id="ceas" class="ceas"></span>
+    <button id="ruleaza" class="btn btn-principal" type="button">Rulează automatizarea</button>
+    <button id="ecran" class="btn" type="button">Ecran complet</button>
   </header>
+
+  <section id="rezultat" class="rezultat" role="status" aria-live="polite" hidden></section>
+
   <main class="content">
-    <p class="empty">Nicio firmă încă. Tabelul apare aici.</p>
+    <div id="tabel-loc" class="tabel-loc">
+      <table id="tabel" class="tabel" aria-label="Firme, luna curentă">
+        <colgroup>
+          <col class="col-nume"><col class="col-cui"><col class="col-suma">
+          <col class="col-max"><col class="col-procent"><col class="col-stare">
+        </colgroup>
+        <thead>
+          <tr>
+            <th aria-sort="none"><button type="button" data-col="nume">Firmă<span class="sageata" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button type="button" data-col="cui">CUI<span class="sageata" aria-hidden="true"></span></button></th>
+            <th aria-sort="none" class="num"><button type="button" data-col="total_bani">Suma lunii<span class="sageata" aria-hidden="true"></span></button></th>
+            <th aria-sort="none" class="num"><button type="button" data-col="max_bani">Max<span class="sageata" aria-hidden="true"></span></button></th>
+            <th aria-sort="descending" class="num"><button type="button" data-col="procent">% din max<span class="sageata" aria-hidden="true"></span></button></th>
+            <th>Stare</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="gol" class="empty" hidden></p>
+    </div>
   </main>
+
+  <footer class="paginare">
+    <nav class="pagini" aria-label="Pagini">
+      <button id="inapoi" class="btn btn-mic" type="button" aria-label="Pagina anterioară">‹</button>
+      <span id="numere-pagini" class="numere-pagini"></span>
+      <button id="inainte" class="btn btn-mic" type="button" aria-label="Pagina următoare">›</button>
+    </nav>
+    <span id="paginare-info" class="paginare-info" aria-live="polite"></span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>
 </html>

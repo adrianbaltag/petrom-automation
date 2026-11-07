@@ -5,7 +5,10 @@
   --text: #1C1C1A;
   --text-muted: #5F5E5A;
   --border: #DEDDD8;
+  --border-control: #8A8984;  /* edges of inputs and buttons: 3:1 against the page */
   --accent: #0B5CAD;
+  --on-accent: #FFFFFF;
+  --focus: #0B5CAD;
 
   /* Row status colours, used from M4 on (always paired with a text label) */
   --status-ok: #FFFFFF;
@@ -22,6 +25,9 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-6: 24px;
+
+  --radius: 6px;
+  --duration-press: 150ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,7 +37,10 @@
     --text: #EDEDEA;
     --text-muted: #A3A29C;
     --border: #3A3936;
+    --border-control: #75746E;
     --accent: #6CA8E8;
+    --on-accent: #0B1A2B;
+    --focus: #6CA8E8;
 
     --status-ok: #20201E;
     --status-warning: #4A3218;
@@ -58,8 +67,9 @@ body {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
   padding: var(--space-3) var(--space-6);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -72,11 +82,243 @@ body {
 }
 
 .content {
+  display: flex;
   flex: 1;
   min-height: 0;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-6) 0;
 }
 
 .empty {
   color: var(--text-muted);
+}
+
+.luna {
+  color: var(--text-muted);
+}
+
+.spatiu {
+  flex: 1;
+}
+
+.ceas {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cautare {
+  min-width: 12rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+/* Buttons */
+.btn {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: opacity var(--duration-press) ease-out;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-principal {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-mic {
+  min-width: 2.25rem;
+  padding: var(--space-1) var(--space-2);
+}
+
+.btn[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Run result box, between the top bar and the table */
+.rezultat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-4) var(--space-6) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rezultat[hidden] {
+  display: none;
+}
+
+.rezultat[data-tip="atentie"] {
+  background: var(--status-warning);
+}
+
+.rezultat[data-tip="eroare"] {
+  background: var(--status-critical);
+}
+
+.rezultat-titlu {
+  margin: 0;
+  font-weight: 600;
+}
+
+.rezultat ul {
+  flex-basis: 100%;
+  order: 2;
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.rezultat-inchide {
+  margin-left: auto;
+}
+
+/* The table fills the space left; rows per page are counted to fit it (dashboard.js). */
+.tabel-loc {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tabel {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.col-nume { width: 32%; }
+.col-cui { width: 12%; }
+.col-suma, .col-max { width: 15%; }
+.col-procent { width: 10%; }
+.col-stare { width: 16%; }
+
+.tabel th,
+.tabel td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabel .num {
+  text-align: right;
+}
+
+.tabel th {
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.tabel th button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Row colours: always paired with the text in the Stare column. */
+.tabel tr[data-stare="ok"] { background: var(--status-ok); }
+.tabel tr[data-stare="atentie"] { background: var(--status-warning); }
+.tabel tr[data-stare="critic"] { background: var(--status-critical); }
+.tabel tr[data-stare="peste"] { background: var(--status-critical); }
+.tabel tr[data-stare="nesetat"] { background: var(--status-unset); color: var(--text-muted); }
+.tabel tr[data-stare="peste"] .stare { font-weight: 700; }
+
+.empty {
+  margin: var(--space-4);
+  color: var(--text-muted);
+}
+
+/* Pager at the bottom */
+.paginare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+}
+
+.pagini,
+.numere-pagini {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.paginare-info {
+  color: var(--text-muted);
+}
+
+/* Narrow window (phone): keep company, amount, % and status; CUI and max are dropped. */
+@media (max-width: 640px) {
+  .topbar,
+  .paginare {
+    padding-inline: var(--space-4);
+  }
+
+  .content {
+    padding-inline: var(--space-4);
+  }
+
+  .col-cui,
+  .col-max,
+  .tabel th:nth-child(2),
+  .tabel td:nth-child(2),
+  .tabel th:nth-child(4),
+  .tabel td:nth-child(4) {
+    display: none;
+  }
+
+  .tabel th,
+  .tabel td {
+    padding-inline: var(--space-2);
+  }
+
+  .col-nume { width: 32%; }
+  .col-suma { width: 30%; }
+  .col-procent { width: 16%; }
+  .col-stare { width: 22%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
 }
