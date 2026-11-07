@@ -1,0 +1,82 @@
+/* Design tokens: every colour, size and space on the page comes from here. */
+:root {
+  --bg: #F7F7F5;
+  --surface: #FFFFFF;
+  --text: #1C1C1A;
+  --text-muted: #5F5E5A;
+  --border: #DEDDD8;
+  --accent: #0B5CAD;
+
+  /* Row status colours, used from M4 on (always paired with a text label) */
+  --status-ok: #FFFFFF;
+  --status-warning: #FCE8D2;
+  --status-critical: #F9D6D4;
+  --status-unset: #ECEBE8;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --size-body: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);
+  --size-title: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161615;
+    --surface: #20201E;
+    --text: #EDEDEA;
+    --text-muted: #A3A29C;
+    --border: #3A3936;
+    --accent: #6CA8E8;
+
+    --status-ok: #20201E;
+    --status-warning: #4A3218;
+    --status-critical: #4F2220;
+    --status-unset: #2C2C2A;
+  }
+}
+
+/* The page fills the window exactly and never scrolls. */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--size-body);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: var(--size-title);
+  text-wrap: balance;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-4) var(--space-6);
+}
+
+.empty {
+  color: var(--text-muted);
+}

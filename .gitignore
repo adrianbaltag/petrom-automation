@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Real data: the repo is public, so none of this may ever be committed
+samples/
+*.pdf
+*.db
+*.db-journal
+*.sqlite
+*.log
+config.ini
+.env
+
+# Project checks' own files
+.claude/state/
+
+# Release zips
+dist/
+
+# Mac development data folder
+data/
