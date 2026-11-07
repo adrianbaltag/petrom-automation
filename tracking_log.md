@@ -1,16 +1,43 @@
 # Tracking log
 
 ## Now working on
-Nothing in progress. M6 done.
+Nothing in progress. M7 done.
 
 ## Next up
-M7 — Setări: folders, archived companies, backups, Despre.
+M8 — Email alerts. Setări → Despre gets the "send a test email" button then (hidden until it works).
 
-Notes for M7:
-- Until Setări sets folders, Rulează uses folders on the real Desktop: keep screen checks on fake data
-  away from it (M6 skipped Rulează in the screen check for this reason).
+Notes for M8:
 - Deferred from M6 (user chose "edit window shows this month"): the Editează window's invoice list and
   a new max always use the CURRENT month, even when a past month is picked. Revisit only if she asks.
+- Screen checks: first point the 3 folders at a fake folder in Setări, so Rulează never touches the
+  real Desktop. Run the app with PETROM_DATA_DIR set to a fake data folder.
+
+Decisions from M7 grill (2026-11-07, user approved):
+- Setări is its own page `/setari` with "← Înapoi" (not a pop-up: 4 sections, dashboard never scrolls).
+- Folders: a paste box per folder (quotes from "Copy as path" stripped), Deschide per folder,
+  Revino la Desktop. No folder picker (browser can't give a path; tkinter off main thread crashes on Mac).
+- Salvează creates missing folders (green note). Bad path refused in Romanian, nothing saved.
+- Verifică checks the boxes without saving or creating: ✓/✗ per folder + PDF count in Facturi-noi.
+- Refused: two boxes on the same folder; any folder inside the app folder (a release replaces it).
+  Nesting among the three is allowed (Rulează reads only top-level PDFs in Facturi-noi).
+- Changing folders moves nothing; warn when the old Facturi-noi still holds PDFs.
+- Firme arhivate move to Setări only; the link under the table goes.
+- Backup: Fă backup acum (own group `petrom-manual-*`, 30 kept), last backup date + count,
+  Deschide folderul de backup. No restore.
+- Despre: `__version__ = "0.7.0"` (1.0.0 at M9, make_release.py reads it), data folder + Deschide.
+  Test email hidden until M8.
+- Deschide opens the SAVED folder, creating it if missing; the page sends only a name
+  (noi/procesate/erori/backup/date), never a path. Tests fake the open call.
+- Review round 1 DESIGN answers (user, 2026-11-07): both go to M9 (user has a Windows laptop):
+  - M9: the "inside the app folder" guard uses PROJECT_ROOT (the folder holding petrom_dashboard/).
+    When the zip layout is fixed, check the guard covers the whole extracted folder (e.g. if
+    start.bat sits one level above the code, guard that level).
+  - M9 Windows hand check in Setări → Verifică: paste `C:foo`, `\foo`, a drive letter that isn't
+    plugged in, a UNC path (\\server\share\x), and the same folder typed in two cases
+    (C:\Facturi vs c:\facturi in two boxes). Expect Romanian refusals, and "Același folder".
+- Also from the M7 reviews: pages and data are sent with `Cache-Control: no-store`, and both pages
+  reload on a back/forward-cache return (`pageshow`), so the browser's Back arrow never shows stale
+  data. Following links in paths falls back to the typed path if Windows can't (offline share).
 
 Decisions from M6 (2026-11-07, user approved):
 - The server works out the dates (`dashboard.period_from_args`); the page sends `?luna=`, `?zile=7|30`
@@ -53,7 +80,8 @@ Open items from M3 (decided 2026-11-06):
   (e.g. `PRAGMA user_version`). `init_db` only creates missing tables, it never adds columns.
 - M9 Windows check: open a PDF in a viewer, run, and confirm no copy is left in Facturi-procesate and the
   summary says "salvată, dar nu am putut-o muta". Also confirm the Desktop lookup finds the OneDrive Desktop.
-- M7: when folders can be changed, test folders on another drive (copy-then-delete path).
+- Folders on another drive: checked for real on the Mac in M7 (a disk image as second drive). The M9
+  Windows check should repeat it with a USB stick or a second partition as Facturi-procesate.
 - The buyer-block limits in `pdf_reader` were tuned on ONE real sample. Add more real PDFs to `samples/`
   (each with a `.json` of expected values) when person B sends them.
 
@@ -62,6 +90,14 @@ Notes from the M1 review:
 - Two copies started within milliseconds could both pass the port check on Windows. M3's run lock is the backstop.
 
 ## Last update
+2026-11-07 — M7 done: Setări page `/setari` (`setari.py`, `setari_routes.py`, `setari.html`,
+`setari.js`, shared `common.js`): folders with Verifică / Salvează / Revino la Desktop / Deschide,
+archived companies moved here from under the table, Fă backup acum + summary, Despre with version
+0.7.0 and data folder. 504 tests green incl. 49 Playwright tests. code-reviewer PASS after 2 rounds
+(user answered 2 DESIGN questions: both to M9). Real cross-drive run checked on a Mac disk image.
+User checked 8 steps on screen with fake data. Known: at ~1280px the top bar wraps "Ecran complet"
+and "Setări" onto a second line (fits on one line on a wider window).
+
 2026-11-07 — M6 done: filter row (Luna curentă, Ultimele 7 / 30 de zile, Luna list, De la / Până la),
 `period_from_args`, `range_rows`, `month_choices`, `edit_max_inputs`, `/date` filters. 395 tests green incl.
 35 Playwright tests. code-reviewer PASS after 3 rounds (user approved round 3). User checked 7 steps on

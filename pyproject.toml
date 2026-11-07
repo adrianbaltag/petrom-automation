@@ -1,6 +1,6 @@
 [project]
 name = "petrom-dashboard"
-version = "0.1.0"
+version = "0.7.0"  # must match petrom_dashboard.__version__ (a test checks)
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]

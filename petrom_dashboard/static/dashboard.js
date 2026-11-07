@@ -61,7 +61,6 @@ async function loadRows(filter = state.filter, newFilter = false) {
     state.rows = body.firme;
     drawFilters(body);
     render();
-    setArchivedCount(body.arhivate); // firme.js: the "Firme arhivate (N)" link under the table
   } catch (err) {
     if (request === lastRequest) {
       showResult("Nu am putut citi datele: serverul nu răspunde.", "eroare");
@@ -293,34 +292,6 @@ function drawSortArrows() {
 
 // ---------- the run button ----------
 
-function showResult(headline, kind, details = []) {
-  const box = $("rezultat");
-  box.dataset.tip = kind;
-  const text = document.createElement("p");
-  text.className = "rezultat-titlu";
-  text.textContent = headline;
-  const parts = [text];
-  if (details.length) {
-    const list = document.createElement("ul");
-    for (const line of details) {
-      const li = document.createElement("li");
-      li.textContent = line;
-      list.appendChild(li);
-    }
-    parts.push(list);
-  }
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "btn btn-mic rezultat-inchide";
-  close.textContent = "Închide";
-  close.addEventListener("click", () => {
-    box.hidden = true;
-  });
-  parts.push(close);
-  box.replaceChildren(...parts);
-  box.hidden = false;
-}
-
 async function runAutomation() {
   const button = $("ruleaza");
   button.disabled = true;
@@ -432,3 +403,9 @@ setDay(isoDay(new Date()));
 tick();
 setInterval(tick, 1000);
 loadRows();
+
+// The browser's own Back/Forward arrows can show this page from memory (back/forward cache),
+// as it was before a change made in Setări. Then the rows are read again.
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) loadRows();
+});

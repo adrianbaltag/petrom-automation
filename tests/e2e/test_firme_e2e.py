@@ -1,7 +1,5 @@
 """End to end in a real browser (Playwright): add, edit, archive, restore, delete invoice."""
 
-import re
-
 from db_helpers import open_db
 from playwright.sync_api import expect
 
@@ -95,11 +93,11 @@ def test_emptying_the_max_is_refused(page, live_url, server_app):
     expect(dialog.get_by_role("alert")).to_have_text("Max-ul nu poate fi șters, doar schimbat.")
 
 
-def test_archive_then_restore_from_the_link_under_the_table(page, live_url, server_app):
+def test_archive_then_restore_in_setari(page, live_url, server_app):
+    # M7: archived companies are restored from the Setări page, not from under the table.
     add_company(server_app, "46133455", "ALFA SRL", max_bani=5000_00)
     add_company(server_app, "1590082", "BETA SRL")
     page.goto(live_url)
-    expect(page.get_by_role("button", name=re.compile("Firme arhivate"))).to_be_hidden()
 
     page.get_by_role("button", name="Editează ALFA SRL").click()
     page.get_by_role("button", name="Arhivează firma").click()
@@ -108,15 +106,21 @@ def test_archive_then_restore_from_the_link_under_the_table(page, live_url, serv
     confirm.get_by_role("button", name="Da, arhivează").click()
 
     expect(page.locator("#tabel tbody tr")).to_have_count(1)
-    expect(page.locator("#rezultat")).to_contain_text("ALFA SRL a fost arhivată")
-    link = page.get_by_role("button", name="Firme arhivate (1)")
-    link.click()
-    archived = page.get_by_role("dialog", name="Firme arhivate")
-    archived.get_by_role("button", name="Restaurează ALFA SRL").click()
+    expect(page.locator("#rezultat")).to_contain_text("O găsești în Setări")
+    setari_link = page.get_by_role("link", name="Setări")
+    expect(setari_link).to_be_focused()
+    setari_link.click()
 
-    expect(archived).to_be_hidden()  # last one restored: the window closes
+    expect(page.get_by_role("heading", name="Firme arhivate (1)")).to_be_visible()
+    page.get_by_role("button", name="Restaurează ALFA SRL").click()
+
+    expect(page.locator("#rezultat")).to_contain_text("Firma ALFA SRL a fost restaurată")
+    title = page.get_by_role("heading", name="Firme arhivate (0)")
+    expect(title).to_be_focused()  # the last one is gone: focus goes to the section title
+    expect(page.get_by_text("Nicio firmă arhivată.")).to_be_visible()
+
+    page.get_by_role("link", name="← Înapoi la tabel").click()
     expect(row(page, "ALFA SRL")).to_contain_text("5.000,00 lei")  # old max kept
-    expect(link).to_be_hidden()
 
 
 def test_cancel_on_archive_keeps_the_company(page, live_url, server_app):
@@ -277,18 +281,16 @@ def test_a_page_load_asks_the_server_once(page, live_url, server_app):
     expect(row(page, "ALFA SRL")).to_have_count(1)
     page.wait_for_timeout(300)
 
-    assert asked == []  # the archived count comes with /date
+    assert asked == []  # since M7 the dashboard has no archived list at all
 
 
-def test_a_failed_archived_list_keeps_the_link(page, live_url, server_app):
+def test_a_failed_restore_in_setari_says_why_and_keeps_the_company(page, live_url, server_app):
     firma_id = add_company(server_app, "46133455", "ALFA SRL")
     with open_db(server_app.config["DATABASE"]) as conn:
         conn.execute("UPDATE firme SET arhivat = 1 WHERE id = ?", (firma_id,))
-    page.goto(live_url)
-    link = page.get_by_role("button", name="Firme arhivate (1)")
-    expect(link).to_be_visible()
+    page.goto(f"{live_url}/setari")
     page.route(
-        "**/firme/arhivate",
+        f"**/firme/{firma_id}/restaureaza",
         lambda route: route.fulfill(
             status=500,
             content_type="application/json",
@@ -296,9 +298,10 @@ def test_a_failed_archived_list_keeps_the_link(page, live_url, server_app):
         ),
     )
 
-    link.click()
-    archived = page.get_by_role("dialog", name="Firme arhivate")
-    expect(archived.get_by_role("alert")).to_contain_text("Nu am putut")
-    archived.get_by_role("button", name="Închide").click()
+    button = page.get_by_role("button", name="Restaurează ALFA SRL")
+    button.click()
 
-    expect(link).to_be_visible()  # the archived company still exists
+    expect(page.locator("#rezultat")).to_contain_text("Nu am putut salva")
+    expect(page.locator("#rezultat")).to_have_attribute("data-tip", "eroare")
+    expect(button).to_be_enabled()  # still there, she can try again
+    expect(page.get_by_role("heading", name="Firme arhivate (1)")).to_be_visible()

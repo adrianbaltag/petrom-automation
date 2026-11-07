@@ -92,13 +92,6 @@ def test_month_list_comes_with_every_answer(client, alfa):
     assert body["luni"][0]["text"] == "noiembrie 2026"
 
 
-def test_archived_count_comes_with_range_answers(app, client, alfa):
-    with open_db(app.config["DATABASE"]) as conn:
-        conn.execute("INSERT INTO firme (cui, nume, arhivat) VALUES ('999', 'VECHE SRL', 1)")
-
-    assert client.get("/date?zile=30").get_json()["arhivate"] == 1
-
-
 @pytest.mark.parametrize(
     "query",
     ["de=2026-11-05&pana=2026-11-01", "de=2026-11-01&pana=2026-11-09", "zile=12", "luna=2026-13"],

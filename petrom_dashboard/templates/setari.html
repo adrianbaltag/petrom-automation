@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setări · Petrom Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="pagina-setari">
+  <header class="topbar">
+    <h1>Setări</h1>
+    <span class="spatiu"></span>
+    <a class="btn" href="/">← Înapoi la tabel</a>
+  </header>
+
+  <section id="rezultat" class="rezultat" role="status" aria-live="polite" hidden></section>
+
+  <main class="setari">
+    <!-- Folders: pasted paths, because a web page can't hand the server a real folder path. -->
+    <section class="card" aria-labelledby="foldere-titlu">
+      <h2 id="foldere-titlu">Foldere</h2>
+      <p class="ajutor">Lipește calea fiecărui folder, copiată din bara de adresă a ferestrei de foldere. Un folder care nu există încă e creat când apeși Salvează. Fișierele din folderele vechi nu sunt mutate.</p>
+      <form id="form-foldere" class="foldere" novalidate>
+        {% set ajutor = {
+          "noi": "Aici pui PDF-urile noi. Rulează citește doar fișierele de aici.",
+          "procesate": "Facturile citite ajung aici, câte un folder pe lună.",
+          "erori": "Fișierele care nu au putut fi citite, plus motive.txt cu motivele.",
+        } %}
+        {% for cheie, cale in foldere.items() %}
+        <div class="folder-rand">
+          <label for="folder-{{ cheie }}">{{ etichete[cheie] }}</label>
+          <p id="folder-{{ cheie }}-ajutor" class="ajutor">{{ ajutor[cheie] }}</p>
+          <div class="folder-camp">
+            <input id="folder-{{ cheie }}" class="camp" name="{{ cheie }}" type="text" value="{{ cale }}"
+                   autocomplete="off" spellcheck="false"
+                   aria-describedby="folder-{{ cheie }}-ajutor folder-{{ cheie }}-stare">
+            <button type="button" class="btn" data-deschide="{{ cheie }}"
+                    aria-label="Deschide folderul salvat {{ etichete[cheie] }}">Deschide</button>
+          </div>
+          <p id="folder-{{ cheie }}-stare" class="folder-stare" hidden></p>
+        </div>
+        {% endfor %}
+        <div class="butoane">
+          <button id="revino-desktop" type="button" class="btn">Revino la Desktop</button>
+          <button id="verifica" type="button" class="btn">Verifică</button>
+          <button type="submit" class="btn btn-principal">Salvează</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="arhivate-titlu">
+      <h2 id="arhivate-titlu" tabindex="-1">Firme arhivate ({{ arhivate|length }})</h2>
+      <p class="ajutor">Nu apar în tabel, dar istoricul lor e păstrat. O firmă revine singură când vine o factură nouă pentru ea.</p>
+      <ul id="arhivate-lista" class="lista">
+        {% for firma in arhivate %}
+        <li>
+          <div class="lista-text">
+            <span title="{{ firma.nume }}">{{ firma.nume }}</span>
+            <span class="ajutor">CUI {{ firma.cui }}</span>
+          </div>
+          <button type="button" class="btn btn-mic" data-restaureaza="{{ firma.id }}"
+                  data-nume="{{ firma.nume }}" aria-label="Restaurează {{ firma.nume }}">Restaurează</button>
+        </li>
+        {% endfor %}
+      </ul>
+      <p id="arhivate-gol" class="empty"{% if arhivate %} hidden{% endif %}>Nicio firmă arhivată.</p>
+    </section>
+
+    <section class="card" aria-labelledby="backup-titlu">
+      <h2 id="backup-titlu">Backup</h2>
+      <p class="ajutor">O copie a datelor se face singură înainte de fiecare rulare și înainte de ștergerea unei facturi. Se păstrează ultimele 30 din fiecare fel.</p>
+      <p id="backup-rezumat" aria-live="polite">{{ backup }}</p>
+      <div class="butoane butoane-stanga">
+        <button id="backup-acum" type="button" class="btn btn-principal">Fă backup acum</button>
+        <button type="button" class="btn" data-deschide="backup">Deschide folderul de backup</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="despre-titlu">
+      <h2 id="despre-titlu">Despre</h2>
+      <p>Petrom Dashboard · Versiunea {{ versiune }}</p>
+      <p class="ajutor">Folderul de date (baza de date, copiile de siguranță și jurnalul):</p>
+      <p class="cale">{{ folder_date }}</p>
+      <div class="butoane butoane-stanga">
+        <button type="button" class="btn" data-deschide="date">Deschide folderul de date</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='common.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='setari.js') }}" defer></script>
+</body>
+</html>

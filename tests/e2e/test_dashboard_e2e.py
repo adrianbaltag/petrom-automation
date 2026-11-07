@@ -187,7 +187,6 @@ def test_table_switches_month_when_left_open_past_midnight(page, live_url):
             "titlu": month_label(next_month),
             "luni": [{"luna": next_month, "text": month_label(next_month)}],
             "firme": [],
-            "arhivate": 0,
         }
     )
     page.route(
@@ -217,7 +216,7 @@ def test_later_milestone_buttons_are_hidden(page, live_url):
 
     expect(page.get_by_role("button", name="Ecran complet")).to_be_visible()
     expect(page.get_by_role("button", name="Adaugă firmă")).to_be_visible()  # arrived in M5
-    expect(page.get_by_role("button", name="Setări")).to_have_count(0)
+    expect(page.get_by_role("link", name="Setări")).to_be_visible()  # arrived in M7
 
 
 def test_run_button_greys_out_shows_summary_and_reloads_table(page, live_url, server_app, tmp_path):

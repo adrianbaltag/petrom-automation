@@ -95,12 +95,12 @@ class RunSummary:
         if self.total == 0:
             return "Niciun PDF nou în Facturi-noi."
         text = (
-            f"{_count(self.total, 'PDF', 'PDF-uri')}: "
-            f"{_count(len(self.adaugate), 'adăugată', 'adăugate')}, "
-            f"{_count(len(self.erori), 'eroare', 'erori')}"
+            f"{count_words(self.total, 'PDF', 'PDF-uri')}: "
+            f"{count_words(len(self.adaugate), 'adăugată', 'adăugate')}, "
+            f"{count_words(len(self.erori), 'eroare', 'erori')}"
         )
         if self.mutate:
-            text += ", " + _count(
+            text += ", " + count_words(
                 len(self.mutate), "mutată (salvată deja)", "mutate (salvate deja)"
             )
         return text
@@ -117,7 +117,7 @@ class RunSummary:
         }
 
 
-def _count(n, one, many):
+def count_words(n, one, many):
     """Romanian counting: '1 eroare', '2 erori', '20 de erori'.
 
     'de' goes in when the last two digits are 00 or 20-99 (so '101 erori' but '120 de erori').

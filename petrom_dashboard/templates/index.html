@@ -17,6 +17,7 @@
     <button id="adauga" class="btn" type="button">Adaugă firmă</button>
     <button id="ruleaza" class="btn btn-principal" type="button">Rulează automatizarea</button>
     <button id="ecran" class="btn" type="button">Ecran complet</button>
+    <a id="setari" class="btn" href="/setari">Setări</a>
   </header>
 
   <!-- Filters: what period the table shows. The page always opens on Luna curentă. -->
@@ -72,7 +73,6 @@
       <span id="numere-pagini" class="numere-pagini"></span>
       <button id="inainte" class="btn btn-mic" type="button" aria-label="Pagina următoare">›</button>
     </nav>
-    <button id="arhivate" class="link-buton" type="button" hidden></button>
     <span id="paginare-info" class="paginare-info" aria-live="polite"></span>
   </footer>
 
@@ -130,19 +130,6 @@
     </section>
   </dialog>
 
-  <!-- Archived companies, with Restaurează (moves into Setări in M7) -->
-  <dialog id="dialog-arhivate" class="fereastra" aria-labelledby="arhivate-titlu">
-    <div class="formular">
-      <h2 id="arhivate-titlu">Firme arhivate</h2>
-      <p class="ajutor">Nu apar în tabel, dar istoricul lor e păstrat. O firmă revine singură când vine o factură nouă pentru ea.</p>
-      <ul id="arhivate-lista" class="lista"></ul>
-      <div class="form-eroare" role="alert" hidden></div>
-      <div class="butoane">
-        <button type="button" class="btn" data-inchide>Închide</button>
-      </div>
-    </div>
-  </dialog>
-
   <!-- "Are you sure?" for delete and archive -->
   <dialog id="dialog-confirma" class="fereastra fereastra-mica" aria-labelledby="confirma-titlu">
     <form method="dialog" class="formular">
@@ -155,6 +142,7 @@
     </form>
   </dialog>
 
+  <script src="{{ url_for('static', filename='common.js') }}" defer></script>
   <script src="{{ url_for('static', filename='firme.js') }}" defer></script>
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>

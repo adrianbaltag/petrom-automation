@@ -6,11 +6,15 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
 
-from petrom_dashboard import automation, firme_routes
+from petrom_dashboard import automation, firme_routes, setari_routes
 from petrom_dashboard import dashboard as table  # "dashboard" is also the page's view name
 from petrom_dashboard.db import connect, init_db
 from petrom_dashboard.paths import default_data_dir
 from petrom_dashboard.setup_logging import setup_logging
+
+# The app's version, shown in Setări → Despre; make_release.py (M9) reads it from here.
+# pyproject.toml repeats it, and a test fails if the two ever differ.
+__version__ = "0.7.0"
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +67,17 @@ def create_app(test_config=None):
             return jsonify(ok=False, mesaj=REFUSED), 403
         return None
 
+    @app.after_request
+    def never_reuse_pages_or_data(response):
+        """Pages and data must always come fresh from the server.
+
+        Without this, the browser's Back arrow re-shows its saved copy: for example the table
+        without a company just restored in Setări. Style and scripts may still be cached.
+        """
+        if response.mimetype in ("text/html", "application/json"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.route("/")
     def dashboard():
         return render_template("index.html")
@@ -91,7 +106,6 @@ def create_app(test_config=None):
                 for row in rows:
                     row["max_input"] = boxes.get(row["id"], "")
                 luni = table.month_choices(conn, today)
-                arhivate = table.archived_count(conn)
         except Exception:
             logger.exception("Could not read the dashboard rows for %s", period.titlu)
             return jsonify(ok=False, mesaj=DATA_FAILED), 500
@@ -101,7 +115,6 @@ def create_app(test_config=None):
             "titlu": period.titlu,
             "firme": rows,
             "luni": luni,
-            "arhivate": arhivate,
         }
         if period.luna:
             answer["luna"] = period.luna
@@ -127,4 +140,5 @@ def create_app(test_config=None):
         return jsonify(summary.to_dict())
 
     app.register_blueprint(firme_routes.bp)
+    app.register_blueprint(setari_routes.bp)
     return app

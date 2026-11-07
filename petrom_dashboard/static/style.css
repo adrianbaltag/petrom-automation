@@ -16,6 +16,8 @@
   --status-critical: #F9D6D4;
   --status-unset: #ECEBE8;
   --status-success: #DCF0DD;  /* result box after something worked */
+  --text-success: #1E6B2E;  /* ✓ lines in Setări: 6.5:1 on the cards */
+  --text-critical: #B42318;  /* ✗ lines in Setări: 6.5:1 on the cards */
 
   --backdrop: #1C1C1A73;  /* behind an open window: dims the page */
 
@@ -28,6 +30,8 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-6: 24px;
+
+  --space-8: 32px;
 
   --radius: 6px;
   --duration-press: 150ms;
@@ -50,6 +54,8 @@
     --status-critical: #4F2220;
     --status-unset: #2C2C2A;
     --status-success: #1F3D26;
+    --text-success: #7FD08F;
+    --text-critical: #F28B82;
 
     --backdrop: #000000A6;
   }
@@ -132,6 +138,10 @@ body {
   font: inherit;
   cursor: pointer;
   transition: opacity var(--duration-press) ease-out;
+}
+
+a.btn {
+  text-decoration: none;  /* links that look like buttons (Setări, Înapoi) */
 }
 
 .btn:hover:not(:disabled) {
@@ -542,6 +552,109 @@ body {
   white-space: nowrap;
 }
 
+/* ---------- Setări page (M7): unlike the dashboard, it scrolls. ---------- */
+body.pagina-setari {
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+}
+
+/* The result box stays in view while she scrolls (e.g. after Fă backup acum at the bottom). */
+body.pagina-setari .rezultat {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(56rem, calc(100% - 2 * var(--space-6)));
+  margin: var(--space-4) auto 0;
+}
+
+.setari {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: min(56rem, calc(100% - 2 * var(--space-6)));
+  margin: var(--space-6) auto var(--space-8);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: var(--size-title);
+  text-wrap: balance;
+}
+
+.card p {
+  margin: 0;
+}
+
+.foldere {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.folder-rand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.folder-rand label {
+  font-weight: 600;
+}
+
+.folder-camp {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.folder-camp .camp {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.folder-camp .camp[aria-invalid="true"] {
+  border-color: var(--text-critical);
+}
+
+.folder-stare[data-ok="da"] {
+  color: var(--text-success);
+}
+
+.folder-stare[data-ok="nu"] {
+  color: var(--text-critical);
+  font-weight: 600;
+}
+
+.folder-stare[hidden] {
+  display: none;
+}
+
+.butoane-stanga {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.foldere .butoane {
+  flex-wrap: wrap;
+}
+
+.cale {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
 /* Narrow window (phone): keep company, amount, % and status; CUI and max are dropped. */
 @media (max-width: 640px) {
   .topbar,
@@ -552,6 +665,19 @@ body {
 
   .content {
     padding-inline: var(--space-4);
+  }
+
+  .setari,
+  body.pagina-setari .rezultat {
+    width: calc(100% - 2 * var(--space-4));
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .folder-camp {
+    flex-direction: column;
   }
 
   .col-cui,

@@ -269,11 +269,17 @@ def test_refused_input_is_written_to_the_log(client, caplog):
     assert "not a JSON object" in log
 
 
-def test_date_carries_the_archived_count(client):
+def test_archived_company_moves_to_the_setari_page_and_back(client):
+    # M7: the archived list moved from under the table to Setări.
     firma_id = add_via_api(client).get_json()["id"]
     add_via_api(client, cui="1590082", nume="BETA SRL")
-    assert client.get("/date").get_json()["arhivate"] == 0
+    assert "Firme arhivate (0)" in client.get("/setari").get_data(as_text=True)
 
     client.post(f"/firme/{firma_id}/arhiveaza")
 
-    assert client.get("/date").get_json()["arhivate"] == 1
+    html = client.get("/setari").get_data(as_text=True)
+    assert "Firme arhivate (1)" in html and "ALFA SRL" in html
+
+    client.post(f"/firme/{firma_id}/restaureaza")
+
+    assert "Firme arhivate (0)" in client.get("/setari").get_data(as_text=True)

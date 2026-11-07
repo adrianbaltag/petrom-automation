@@ -1,41 +1,10 @@
 // Changes by hand (M5): add a company, edit its name and max, list and delete this month's
-// invoices, archive and restore. Loaded before dashboard.js, which calls wireFirme() and
-// whose loadRows() / showResult() this file uses.
+// invoices, archive (restore lives in Setări since M7). Loaded after common.js (getJson,
+// postJson, showResult) and before dashboard.js, which calls wireFirme() and whose loadRows()
+// this file uses.
 "use strict";
 
 let editing = null; // the company open in the edit window: a row from /date
-let archivedList = [];
-
-// ---------- talking to the server ----------
-
-async function readAnswer(response) {
-  try {
-    return await response.json();
-  } catch (err) {
-    return { ok: false, mesaj: "Răspuns neașteptat de la server (detalii în jurnal)." };
-  }
-}
-
-async function getJson(url) {
-  try {
-    return await readAnswer(await fetch(url));
-  } catch (err) {
-    return { ok: false, mesaj: "Serverul nu răspunde." };
-  }
-}
-
-async function postJson(url, data = {}) {
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await readAnswer(response);
-  } catch (err) {
-    return { ok: false, mesaj: "Serverul nu răspunde." };
-  }
-}
 
 // ---------- small helpers ----------
 
@@ -249,86 +218,8 @@ async function archiveCompany() {
   }
   document.getElementById("dialog-firma").close();
   await loadRows();
-  showResult(`Firma ${firma.nume} a fost arhivată. O găsești la „Firme arhivate”, sub tabel.`, "ok");
-  document.getElementById("arhivate").focus();
-}
-
-// ---------- archived companies ----------
-
-function setArchivedCount(count) {
-  // Called by loadRows() with the count from /date: the link shows only when N > 0.
-  const link = document.getElementById("arhivate");
-  link.hidden = !count;
-  link.textContent = `Firme arhivate (${count})`;
-}
-
-async function refreshArchived() {
-  // The list itself is fetched only for the "Firme arhivate" window.
-  const dlg = document.getElementById("dialog-arhivate");
-  const body = await getJson("/firme/arhivate");
-  if (!body.ok) {
-    // Keep the link and its count: the archived companies still exist.
-    showFormError(dlg, body.mesaj);
-    archivedList = [];
-    return;
-  }
-  archivedList = body.firme;
-  setArchivedCount(archivedList.length);
-}
-
-function drawArchived() {
-  const list = document.getElementById("arhivate-lista");
-  list.replaceChildren(
-    ...archivedList.map((firma) => {
-      const li = document.createElement("li");
-      const text = document.createElement("div");
-      text.className = "lista-text";
-      const name = document.createElement("span");
-      name.textContent = firma.nume;
-      name.title = firma.nume;
-      const cui = document.createElement("span");
-      cui.className = "ajutor";
-      cui.textContent = `CUI ${firma.cui}`;
-      text.append(name, cui);
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "btn btn-mic";
-      button.textContent = "Restaurează";
-      button.setAttribute("aria-label", `Restaurează ${firma.nume}`);
-      button.addEventListener("click", () => restoreCompany(firma));
-      li.append(text, button);
-      return li;
-    }),
-  );
-}
-
-async function openArchived() {
-  const dlg = document.getElementById("dialog-arhivate");
-  clearFormError(dlg);
-  await refreshArchived();
-  drawArchived();
-  dlg.showModal();
-}
-
-async function restoreCompany(firma) {
-  const dlg = document.getElementById("dialog-arhivate");
-  const body = await postJson(`/firme/${firma.id}/restaureaza`);
-  if (!body.ok) {
-    showFormError(dlg, body.mesaj);
-    return;
-  }
-  clearFormError(dlg);
-  await loadRows();
-  await refreshArchived();
-  drawArchived();
-  showResult(`Firma ${firma.nume} a fost restaurată.`, "ok");
-  if (archivedList.length) {
-    // The clicked button is gone: go to the first Restaurează left.
-    dlg.querySelector("#arhivate-lista button").focus();
-  } else {
-    dlg.close();
-    focusCompany(firma.id);
-  }
+  showResult(`Firma ${firma.nume} a fost arhivată. O găsești în Setări, la „Firme arhivate”.`, "ok");
+  document.getElementById("setari").focus();
 }
 
 // ---------- wiring (called once by dashboard.js) ----------
@@ -338,7 +229,6 @@ function wireFirme() {
   document.getElementById("form-adauga").addEventListener("submit", submitAdd);
   document.getElementById("form-firma").addEventListener("submit", submitEdit);
   document.getElementById("arhiveaza").addEventListener("click", archiveCompany);
-  document.getElementById("arhivate").addEventListener("click", openArchived);
   document.getElementById("dialog-firma").addEventListener("close", () => {
     editing = null;
   });

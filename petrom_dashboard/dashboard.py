@@ -286,7 +286,3 @@ def month_choices(conn, day):
         year, month = (year - 1, 12) if month == 1 else (year, month - 1)
     return choices
 
-
-def archived_count(conn):
-    """How many companies are archived: the page shows "Firme arhivate (N)" when N > 0."""
-    return conn.execute("SELECT COUNT(*) FROM firme WHERE arhivat = 1").fetchone()[0]
