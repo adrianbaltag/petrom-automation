@@ -1,16 +1,29 @@
 # Tracking log
 
 ## Now working on
-Nothing in progress. M5 done.
+Nothing in progress. M6 done.
 
 ## Next up
-M6 — Filters: 7 days, 30 days, calendar, month picker.
+M7 — Setări: folders, archived companies, backups, Despre.
 
-Notes for M6:
-- Editing the max always writes the CURRENT month (`table.current_month()` in `firme_routes`). Decide what
-  editing means while an older month is picked (M5 deferred this on purpose).
-- The Editează window lists THIS month's invoices; make it follow the picked month.
-- `/date` now also returns `arhivate` (archived count) and each row's `max_input` (max without "lei").
+Notes for M7:
+- Until Setări sets folders, Rulează uses folders on the real Desktop: keep screen checks on fake data
+  away from it (M6 skipped Rulează in the screen check for this reason).
+- Deferred from M6 (user chose "edit window shows this month"): the Editează window's invoice list and
+  a new max always use the CURRENT month, even when a past month is picked. Revisit only if she asks.
+
+Decisions from M6 (2026-11-07, user approved):
+- The server works out the dates (`dashboard.period_from_args`); the page sends `?luna=`, `?zile=7|30`
+  or `?de=&pana=`. "7 zile" = today plus the 6 days before. Totals by invoice date, both edges included.
+- Month list = Romanian month names, newest first, back to the oldest invoice's month (archived
+  companies' invoices count).
+- Calendar = two date boxes + Aplică: De la ≤ Până la, no future dates, no length limit; refused ranges
+  get a Romanian message (400) and the table keeps the previous filter and page.
+- Range views: Firmă, CUI, Suma perioadei only, biggest first, grey note; no max, %, colours.
+- The filter stays after Rulează or an edit. Midnight: Luna curentă and 7/30 zile move forward; a picked
+  month or range stays. Reopening the page = Luna curentă. Only active companies in every view.
+- Bug fixed: the edit window's max box now always starts from THIS month's max (`edit_max_inputs`);
+  before, editing only the name while a past month was shown silently saved that month's max.
 
 Decisions from M5 (2026-11-07, user approved):
 - "✎ Editează" button next to each name (white in light mode, dark in dark mode; only ✎ on a phone),
@@ -49,6 +62,12 @@ Notes from the M1 review:
 - Two copies started within milliseconds could both pass the port check on Windows. M3's run lock is the backstop.
 
 ## Last update
+2026-11-07 — M6 done: filter row (Luna curentă, Ultimele 7 / 30 de zile, Luna list, De la / Până la),
+`period_from_args`, `range_rows`, `month_choices`, `edit_max_inputs`, `/date` filters. 395 tests green incl.
+35 Playwright tests. code-reviewer PASS after 3 rounds (user approved round 3). User checked 7 steps on
+screen with fake data. `ruff format` still wants to reformat two older files (test_firme_e2e.py,
+test_pdf_reader.py), untouched in M6.
+
 2026-11-07 — M5 done: `firme.py` (add, edit, archive, restore, month invoices, delete), `firme_routes.py`
 (7 JSON routes behind the origin guard), `cui.py` (shared CUI cleanup), add/edit/archived/confirm windows
 (`firme.js`), green success box, focus kept for keyboard users. 330 tests green incl. 24 Playwright tests.

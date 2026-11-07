@@ -175,9 +175,7 @@ def test_rows_carry_display_text(db_file):
     assert rows["111"]["max_text"] == "1.000,00 lei"
     assert rows["111"]["procent_text"] == "123%"
     assert rows["111"]["eticheta"] == "PESTE LIMITĂ"
-    assert rows["111"]["max_input"] == "1.000,00"  # the edit form's max box, no "lei"
     assert rows["222"]["max_text"] == "Max nesetat"
-    assert rows["222"]["max_input"] == ""
     assert rows["222"]["procent_text"] == "—"
     assert rows["222"]["eticheta"] == "Max nesetat"
 

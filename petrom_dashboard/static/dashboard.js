@@ -1,40 +1,134 @@
-// Dashboard page: loads this month's rows from /date, then sorts, searches and pages them
-// in the browser. Also runs the clock, the full-screen button and the "Rulează" button.
+// Dashboard page: loads the rows for the chosen period from /date (this month by default),
+// then sorts, searches and pages them in the browser. Also runs the filters, the clock,
+// the full-screen button and the "Rulează" button.
 "use strict";
 
 const ZILE = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
 const NUMERIC = new Set(["total_bani", "max_bani", "procent"]);
 const NULLS_LAST = new Set(["max_bani", "procent"]); // "Max nesetat" rows: always at the bottom
 
+// Default sort per view: by % in a month, by amount in a date range (it has no %).
+const DEFAULT_SORT = {
+  luna: { col: "procent", dir: "desc" },
+  perioada: { col: "total_bani", dir: "desc" },
+};
+
 const state = {
   rows: [],
-  luna: null,
-  sort: { col: "procent", dir: "desc" },
+  // The filter in use. luna: null = this month, and it follows the clock past midnight.
+  // Others: { tip: "zile", zile: 7 } or { tip: "calendar", de: "2026-10-01", pana: "…" }.
+  filter: { tip: "luna", luna: null },
+  tip: "luna", // what the server last showed: "luna" or "perioada"
+  day: null, // today as "YYYY-MM-DD" on this computer, to notice midnight
+  sort: { ...DEFAULT_SORT.luna },
   search: "",
   page: 1,
 };
 
 const $ = (id) => document.getElementById(id);
 const tbody = document.querySelector("#tabel tbody");
+let lastRequest = 0; // only the newest answer is drawn, if quick clicks overlap
 
 // ---------- data ----------
 
-async function loadRows() {
+function queryFor(filter) {
+  if (filter.tip === "zile") return `?zile=${filter.zile}`;
+  if (filter.tip === "calendar") {
+    return `?${new URLSearchParams({ de: filter.de, pana: filter.pana })}`;
+  }
+  return filter.luna ? `?luna=${filter.luna}` : "";
+}
+
+async function loadRows(filter = state.filter, newFilter = false) {
+  // Loads the rows for `filter`. The filter is kept only if the server accepts it, so a
+  // refused calendar range leaves the table (and later reloads) on the previous filter.
+  // `newFilter`: she chose a filter, so an accepted answer starts again on page 1.
+  const request = ++lastRequest;
   try {
-    const response = await fetch("/date");
+    const response = await fetch(`/date${queryFor(filter)}`);
     const body = await response.json();
+    if (request !== lastRequest) return;
     if (!body.ok) {
-      showResult(body.mesaj, "eroare");
+      if (response.status === 400) showFilterError(body.mesaj);
+      else showResult(body.mesaj, "eroare");
       return;
     }
+    showFilterError("");
+    if (body.tip !== state.tip) state.sort = { ...DEFAULT_SORT[body.tip] };
+    if (newFilter || body.tip !== state.tip) state.page = 1;
+    state.filter = filter;
+    state.tip = body.tip;
     state.rows = body.firme;
-    state.luna = body.luna;
-    $("luna").textContent = body.luna_text;
+    drawFilters(body);
     render();
     setArchivedCount(body.arhivate); // firme.js: the "Firme arhivate (N)" link under the table
   } catch (err) {
-    showResult("Nu am putut citi datele: serverul nu răspunde.", "eroare");
+    if (request === lastRequest) {
+      showResult("Nu am putut citi datele: serverul nu răspunde.", "eroare");
+    }
   }
+}
+
+function applyFilter(filter) {
+  loadRows(filter, true);
+}
+
+// ---------- filters ----------
+
+function showFilterError(text) {
+  const box = $("filtru-eroare");
+  box.textContent = text;
+  box.hidden = !text;
+}
+
+function drawFilters(body) {
+  const filter = state.filter;
+  $("luna").textContent = body.titlu;
+  $("tabel").dataset.tip = body.tip;
+  $("tabel").setAttribute("aria-label", `Firme, ${body.titlu}`);
+  $("titlu-suma").textContent = body.tip === "luna" ? "Suma lunii" : "Suma perioadei";
+  $("nota-perioada").hidden = body.tip === "luna";
+
+  const select = $("alege-luna");
+  const placeholder = new Option("Alege luna…", "");
+  placeholder.disabled = true;
+  select.replaceChildren(placeholder, ...body.luni.map((m) => new Option(m.text, m.luna)));
+  select.value = body.tip === "luna" ? body.luna : "";
+
+  const thisMonth = body.tip === "luna" && body.luna === body.luni[0].luna;
+  for (const button of document.querySelectorAll("[data-filtru]")) {
+    const pressed =
+      button.dataset.filtru === "luna"
+        ? thisMonth
+        : filter.tip === "zile" && String(filter.zile) === button.dataset.filtru;
+    button.setAttribute("aria-pressed", String(pressed));
+  }
+  // A past month shows as the picked month in the list; a range as the filled date boxes.
+  select.parentElement.toggleAttribute("data-activ", body.tip === "luna" && !thisMonth);
+  $("form-calendar").toggleAttribute("data-activ", filter.tip === "calendar");
+}
+
+function pickMonth() {
+  const luna = $("alege-luna").value;
+  const thisMonth = $("alege-luna").options[1]?.value;
+  // Picking this month is the same as "Luna curentă": it follows the clock at midnight.
+  applyFilter({ tip: "luna", luna: luna === thisMonth ? null : luna });
+}
+
+function applyCalendar(event) {
+  event.preventDefault();
+  applyFilter({ tip: "calendar", de: $("data-de").value, pana: $("data-pana").value });
+}
+
+function isoDay(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function setDay(day) {
+  // The date boxes can't go past today (the server refuses future dates too).
+  state.day = day;
+  $("data-de").max = day;
+  $("data-pana").max = day;
 }
 
 // ---------- sort and search ----------
@@ -268,11 +362,14 @@ function tick() {
   $("ceas").textContent =
     `${ZILE[now.getDay()]}, ${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}` +
     ` · ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  // Left open past midnight into a new month: switch the table to the new month.
-  const month = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-  if (state.luna && month !== state.luna) {
-    state.luna = month;
-    loadRows();
+  // Left open past midnight: "Luna curentă" moves to a new month and 7 / 30 days move one
+  // day forward. A picked month or calendar range stays; it is reloaded on a new month
+  // only so the month list gains the new month.
+  const day = isoDay(now);
+  if (state.day && day !== state.day) {
+    const newMonth = day.slice(0, 7) !== state.day.slice(0, 7);
+    setDay(day);
+    if (newMonth || state.filter.tip === "zile") loadRows();
   }
 }
 
@@ -316,6 +413,14 @@ $("inainte").addEventListener("click", () => {
   state.page += 1;
   render();
 });
+for (const button of document.querySelectorAll("[data-filtru]")) {
+  button.addEventListener("click", () => {
+    const which = button.dataset.filtru;
+    applyFilter(which === "luna" ? { tip: "luna", luna: null } : { tip: "zile", zile: Number(which) });
+  });
+}
+$("alege-luna").addEventListener("change", pickMonth);
+$("form-calendar").addEventListener("submit", applyCalendar);
 $("ruleaza").addEventListener("click", runAutomation);
 $("ecran").addEventListener("click", toggleFullScreen);
 wireFirme(); // firme.js: add, edit, archive and restore windows
@@ -323,6 +428,7 @@ wireFirme(); // firme.js: add, edit, archive and restore windows
 // Window resized, or the result box opened or closed: re-fit the rows per page.
 new ResizeObserver(() => render()).observe($("tabel-loc"));
 
+setDay(isoDay(new Date()));
 tick();
 setInterval(tick, 1000);
 loadRows();

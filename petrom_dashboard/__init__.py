@@ -68,19 +68,46 @@ def create_app(test_config=None):
         return render_template("index.html")
 
     @app.get("/date")
-    def date_luna():
-        """This month's rows as JSON. The page reads it on load and after each run."""
-        luna = table.current_month()
+    def date_tabel():
+        """The table's rows as JSON, for the filter the page sends (none = this month).
+
+        `?luna=2026-09`, `?zile=7` or `?zile=30`, or `?de=2026-10-01&pana=2026-10-15`.
+        The page reads it on load, on each filter change and after each run.
+        """
+        today = table.today()
+        try:
+            period = table.period_from_args(request.args, today)
+        except table.PeriodError as err:
+            logger.warning("Refused filter %s: %s", dict(request.args), err.mesaj)
+            return jsonify(ok=False, mesaj=err.mesaj), 400
         try:
             with closing(connect(app.config["DATABASE"])) as conn:
-                rows = table.month_rows(conn, luna)
+                if period.luna:
+                    rows = table.month_rows(conn, period.luna)
+                else:
+                    rows = table.range_rows(conn, period.start, period.end)
+                # The edit window's max box always starts from this month's max.
+                boxes = table.edit_max_inputs(conn, table.current_month(today))
+                for row in rows:
+                    row["max_input"] = boxes.get(row["id"], "")
+                luni = table.month_choices(conn, today)
                 arhivate = table.archived_count(conn)
         except Exception:
-            logger.exception("Could not read the dashboard rows for %s", luna)
+            logger.exception("Could not read the dashboard rows for %s", period.titlu)
             return jsonify(ok=False, mesaj=DATA_FAILED), 500
-        return jsonify(
-            ok=True, luna=luna, luna_text=table.month_label(luna), firme=rows, arhivate=arhivate
-        )
+        answer = {
+            "ok": True,
+            "tip": "luna" if period.luna else "perioada",
+            "titlu": period.titlu,
+            "firme": rows,
+            "luni": luni,
+            "arhivate": arhivate,
+        }
+        if period.luna:
+            answer["luna"] = period.luna
+        else:
+            answer["de"], answer["pana"] = period.start.isoformat(), period.end.isoformat()
+        return jsonify(answer)
 
     @app.post("/ruleaza")
     def ruleaza():

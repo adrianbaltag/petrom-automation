@@ -119,11 +119,13 @@ def test_request_with_a_foreign_host_name_is_refused(client):
 
 
 def test_date_returns_this_months_rows(app, client, monkeypatch):
+    from datetime import date
+
     from db_helpers import open_db
 
     from petrom_dashboard import dashboard
 
-    monkeypatch.setattr(dashboard, "current_month", lambda: "2026-11")
+    monkeypatch.setattr(dashboard, "today", lambda: date(2026, 11, 7))
     with open_db(app.config["DATABASE"]) as conn:
         conn.execute("INSERT INTO firme (id, cui, nume) VALUES (1, '111', 'ALFA SRL')")
         conn.execute("INSERT INTO limite VALUES (1, '2026-11', 100000)")
@@ -133,9 +135,10 @@ def test_date_returns_this_months_rows(app, client, monkeypatch):
     assert response.status_code == 200
     body = response.get_json()
     assert body["luna"] == "2026-11"
-    assert body["luna_text"] == "noiembrie 2026"
+    assert body["titlu"] == "noiembrie 2026"
     assert [row["cui"] for row in body["firme"]] == ["111"]
     assert body["firme"][0]["max_text"] == "1.000,00 lei"
+    assert body["firme"][0]["max_input"] == "1.000,00"  # the edit form's max box, no "lei"
 
 
 def test_date_reports_a_database_failure(app, client, monkeypatch):

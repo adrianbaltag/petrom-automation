@@ -165,6 +165,69 @@ body {
   outline-offset: 2px;
 }
 
+/* Filter bar under the top bar: quick periods, month list, calendar range. */
+.filtre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  padding: var(--space-2) var(--space-6);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.filtre-grup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filtre label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.camp {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+/* The filter in use: a pressed quick button, or the month list / calendar it came from. */
+.btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.filtre-grup[data-activ] .camp {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.filtru-eroare {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--status-critical);
+}
+
+.nota-perioada {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.filtru-eroare[hidden],
+.nota-perioada[hidden] {
+  display: none;
+}
+
 /* Run result box, between the top bar and the table */
 .rezultat {
   display: flex;
@@ -232,6 +295,19 @@ body {
 .col-suma, .col-max { width: 15%; }
 .col-procent { width: 10%; }
 .col-stare { width: 16%; }
+
+/* 7 / 30 days and calendar: only company, CUI and amount. A max is per month. */
+.tabel[data-tip="perioada"] .col-max,
+.tabel[data-tip="perioada"] .col-procent,
+.tabel[data-tip="perioada"] .col-stare,
+.tabel[data-tip="perioada"] th:nth-child(n+4),
+.tabel[data-tip="perioada"] td:nth-child(n+4) {
+  display: none;
+}
+
+.tabel[data-tip="perioada"] .col-nume { width: 55%; }
+.tabel[data-tip="perioada"] .col-cui { width: 20%; }
+.tabel[data-tip="perioada"] .col-suma { width: 25%; }
 
 .tabel th,
 .tabel td {
@@ -469,6 +545,7 @@ body {
 /* Narrow window (phone): keep company, amount, % and status; CUI and max are dropped. */
 @media (max-width: 640px) {
   .topbar,
+  .filtre,
   .paginare {
     padding-inline: var(--space-4);
   }

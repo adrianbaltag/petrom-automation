@@ -180,7 +180,15 @@ def test_table_switches_month_when_left_open_past_midnight(page, live_url):
 
     # The server's clock isn't faked, so answer /date as the server would after midnight.
     body = json.dumps(
-        {"ok": True, "luna": next_month, "luna_text": month_label(next_month), "firme": []}
+        {
+            "ok": True,
+            "tip": "luna",
+            "luna": next_month,
+            "titlu": month_label(next_month),
+            "luni": [{"luna": next_month, "text": month_label(next_month)}],
+            "firme": [],
+            "arhivate": 0,
+        }
     )
     page.route(
         "**/date",

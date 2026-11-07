@@ -19,6 +19,28 @@
     <button id="ecran" class="btn" type="button">Ecran complet</button>
   </header>
 
+  <!-- Filters: what period the table shows. The page always opens on Luna curentă. -->
+  <nav class="filtre" aria-label="Perioadă">
+    <div class="filtre-grup" role="group" aria-label="Perioadă rapidă">
+      <button type="button" class="btn" data-filtru="luna" aria-pressed="true">Luna curentă</button>
+      <button type="button" class="btn" data-filtru="7" aria-pressed="false">Ultimele 7 zile</button>
+      <button type="button" class="btn" data-filtru="30" aria-pressed="false">Ultimele 30 de zile</button>
+    </div>
+    <div class="filtre-grup">
+      <label for="alege-luna">Luna</label>
+      <select id="alege-luna" class="camp"></select>
+    </div>
+    <form id="form-calendar" class="filtre-grup" novalidate>
+      <label for="data-de">De la</label>
+      <input id="data-de" class="camp" type="date" name="de">
+      <label for="data-pana">Până la</label>
+      <input id="data-pana" class="camp" type="date" name="pana">
+      <button type="submit" class="btn">Aplică</button>
+    </form>
+    <p id="filtru-eroare" class="filtru-eroare" role="alert" hidden></p>
+    <p id="nota-perioada" class="nota-perioada" hidden>Culorile și limitele apar doar în vizualizarea lunară.</p>
+  </nav>
+
   <section id="rezultat" class="rezultat" role="status" aria-live="polite" hidden></section>
 
   <main class="content">
@@ -32,7 +54,7 @@
           <tr>
             <th aria-sort="none"><button type="button" data-col="nume">Firmă<span class="sageata" aria-hidden="true"></span></button></th>
             <th aria-sort="none"><button type="button" data-col="cui">CUI<span class="sageata" aria-hidden="true"></span></button></th>
-            <th aria-sort="none" class="num"><button type="button" data-col="total_bani">Suma lunii<span class="sageata" aria-hidden="true"></span></button></th>
+            <th aria-sort="none" class="num"><button type="button" data-col="total_bani"><span id="titlu-suma">Suma lunii</span><span class="sageata" aria-hidden="true"></span></button></th>
             <th aria-sort="none" class="num"><button type="button" data-col="max_bani">Max<span class="sageata" aria-hidden="true"></span></button></th>
             <th aria-sort="descending" class="num"><button type="button" data-col="procent">% din max<span class="sageata" aria-hidden="true"></span></button></th>
             <th>Stare</th>
