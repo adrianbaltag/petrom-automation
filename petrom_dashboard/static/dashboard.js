@@ -31,6 +31,7 @@ async function loadRows() {
     state.luna = body.luna;
     $("luna").textContent = body.luna_text;
     render();
+    setArchivedCount(body.arhivate); // firme.js: the "Firme arhivate (N)" link under the table
   } catch (err) {
     showResult("Nu am putut citi datele: serverul nu răspunde.", "eroare");
   }
@@ -70,11 +71,38 @@ function visibleRows() {
 
 // ---------- drawing the table ----------
 
+function makeNameCell(r) {
+  // Company name, cut short with "…" when long, then the "✎ Editează" button (firme.js).
+  const td = document.createElement("td");
+  const box = document.createElement("div");
+  box.className = "nume-cel";
+  const name = document.createElement("span");
+  name.className = "nume-text";
+  name.textContent = r.nume;
+  name.title = r.nume;
+  const edit = document.createElement("button");
+  edit.type = "button";
+  edit.className = "btn btn-mic btn-editeaza";
+  edit.setAttribute("aria-label", `Editează ${r.nume}`);
+  edit.dataset.firma = String(r.id);
+  const pencil = document.createElement("span");
+  pencil.setAttribute("aria-hidden", "true");
+  pencil.textContent = "✎";
+  const word = document.createElement("span");
+  word.className = "editeaza-text";
+  word.textContent = "Editează";
+  edit.append(pencil, word);
+  edit.addEventListener("click", () => openEdit(r));
+  box.append(name, edit);
+  td.appendChild(box);
+  return td;
+}
+
 function makeRow(r) {
   const tr = document.createElement("tr");
   tr.dataset.stare = r.stare;
+  tr.appendChild(makeNameCell(r));
   const cells = [
-    [r.nume, ""],
     [r.cui, ""],
     [r.suma_text, "num"],
     [r.max_text, "num"],
@@ -100,6 +128,9 @@ function rowsPerPage(sample) {
 }
 
 function render() {
+  // Redrawing replaces every row. If an Editează button had keyboard focus, give it back
+  // to the same company's new button afterwards, so keyboard users keep their place.
+  const focused = document.activeElement?.closest?.(".btn-editeaza")?.dataset.firma;
   const rows = visibleRows();
   const perPage = rows.length ? rowsPerPage(rows[0]) : 1;
   const pages = Math.max(1, Math.ceil(rows.length / perPage));
@@ -107,6 +138,7 @@ function render() {
 
   const start = (state.page - 1) * perPage;
   tbody.replaceChildren(...rows.slice(start, start + perPage).map(makeRow));
+  if (focused) tbody.querySelector(`.btn-editeaza[data-firma="${focused}"]`)?.focus();
 
   const empty = $("gol");
   empty.hidden = rows.length > 0;
@@ -286,6 +318,7 @@ $("inainte").addEventListener("click", () => {
 });
 $("ruleaza").addEventListener("click", runAutomation);
 $("ecran").addEventListener("click", toggleFullScreen);
+wireFirme(); // firme.js: add, edit, archive and restore windows
 
 // Window resized, or the result box opened or closed: re-fit the rows per page.
 new ResizeObserver(() => render()).observe($("tabel-loc"));

@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pdfplumber
 
+from petrom_dashboard.cui import clean_cui
 from petrom_dashboard.money import AmountError, parse_amount
 
 logger = logging.getLogger(__name__)
@@ -176,7 +177,10 @@ def _parse_buyer(buyer_text):
     match = _CUI.search("\n".join(block))
     if match is None:
         raise InvoiceError(NO_CUI)
-    return match.group(1), nume
+    cui = clean_cui(match.group(1))  # same rule as the Adaugă firmă form
+    if len(cui) < 2:
+        raise InvoiceError(NO_CUI, detail=f"CUI {match.group(1)!r} is only zeros")
+    return cui, nume
 
 
 def _parse_total(plain):

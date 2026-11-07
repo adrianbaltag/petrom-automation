@@ -6,7 +6,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
 
-from petrom_dashboard import automation
+from petrom_dashboard import automation, firme_routes
 from petrom_dashboard import dashboard as table  # "dashboard" is also the page's view name
 from petrom_dashboard.db import connect, init_db
 from petrom_dashboard.paths import default_data_dir
@@ -74,10 +74,13 @@ def create_app(test_config=None):
         try:
             with closing(connect(app.config["DATABASE"])) as conn:
                 rows = table.month_rows(conn, luna)
+                arhivate = table.archived_count(conn)
         except Exception:
             logger.exception("Could not read the dashboard rows for %s", luna)
             return jsonify(ok=False, mesaj=DATA_FAILED), 500
-        return jsonify(ok=True, luna=luna, luna_text=table.month_label(luna), firme=rows)
+        return jsonify(
+            ok=True, luna=luna, luna_text=table.month_label(luna), firme=rows, arhivate=arhivate
+        )
 
     @app.post("/ruleaza")
     def ruleaza():
@@ -96,4 +99,5 @@ def create_app(test_config=None):
             return jsonify(ok=False, mesaj=UNEXPECTED_RUN_ERROR), 500
         return jsonify(summary.to_dict())
 
+    app.register_blueprint(firme_routes.bp)
     return app

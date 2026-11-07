@@ -723,3 +723,28 @@ def test_move_to_another_drive_removes_a_half_written_copy(tmp_path, monkeypatch
 
     assert src.exists()
     assert list((tmp_path / "dest").iterdir()) == []
+
+
+def test_delete_backups_and_run_backups_are_kept_apart(tmp_path):
+    db_file = tmp_path / "petrom.db"
+    init_db(db_file)
+    backups = tmp_path / "backups"
+    backups.mkdir()
+    runs = [f"petrom-202001{i // 10:02d}-0000{i % 10:02d}-000000.db" for i in range(30)]
+    deletes = [f"petrom-stergere-202001{i // 10:02d}-0000{i % 10:02d}-000000.db" for i in range(35)]
+    for name in runs + deletes:
+        (backups / name).write_bytes(b"old")
+
+    newest = backup_database(db_file, backups, prefix="petrom-stergere")
+
+    assert newest.name.startswith("petrom-stergere-")
+    assert len(list(backups.glob("petrom-stergere-*.db"))) == 30
+    assert all((backups / name).exists() for name in runs)  # run backups untouched
+
+    newest_run = backup_database(db_file, backups)  # a run backup: must not touch deletes
+    assert len(list(backups.glob("petrom-stergere-*.db"))) == 30
+    # ...and the delete backups must not push out run backups: 31 runs -> newest 30 kept.
+    kept_runs = sorted(p.name for p in backups.glob("petrom-[0-9]*.db"))
+    assert len(kept_runs) == 30
+    assert newest_run.exists()
+    assert kept_runs[0] == sorted(runs)[1]  # only the oldest run backup went

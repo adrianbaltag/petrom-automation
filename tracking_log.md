@@ -1,19 +1,31 @@
 # Tracking log
 
 ## Now working on
-Nothing in progress. M4 done.
+Nothing in progress. M5 done.
 
 ## Next up
-M5 — CRUD: add, edit name and monthly max, archive/restore, invoice list with delete.
+M6 — Filters: 7 days, 30 days, calendar, month picker.
 
-Notes for M5:
-- Refuse a max of 0 or below on input. Until then `dashboard.month_rows` shows it as "Max nesetat" and logs
-  a warning.
-- Add the "Adaugă firmă" button back to the top bar (hidden in M4 on purpose: no buttons that do nothing).
-- Max for a month = latest `limite` row in or before that month (read-time lookup, no copied rows).
-  Editing June's max therefore also changes July if July has no row of its own. Check this matches the
-  plan's "changing June never changes May" when building the edit form.
-- The page reads `GET /date` (JSON rows) on load and after each run; reuse it after add/edit.
+Notes for M6:
+- Editing the max always writes the CURRENT month (`table.current_month()` in `firme_routes`). Decide what
+  editing means while an older month is picked (M5 deferred this on purpose).
+- The Editează window lists THIS month's invoices; make it follow the picked month.
+- `/date` now also returns `arhivate` (archived count) and each row's `max_input` (max without "lei").
+
+Decisions from M5 (2026-11-07, user approved):
+- "✎ Editează" button next to each name (white in light mode, dark in dark mode; only ✎ on a phone),
+  not a clickable row.
+- A max change applies to this month and later; earlier months keep theirs; last edit in a month wins.
+- CUI: RO, any spaces and leading zeros removed, check digit verified on manual add. One shared rule
+  (`cui.clean_cui`) for the PDF reader and the form; the reader does NOT check the digit.
+- Max optional when adding; once set it can be changed but never emptied. 0 or below refused.
+- Same names allowed (CUI is the identity). Active duplicate CUI refused with the reason; archived one
+  offers Restaurează, which uses the typed max and keeps the old name.
+- Archive asks first; "Firme arhivate (N)" link under the table restores (moves to Setări in M7).
+- Invoice delete: this month's list, asks first, backup first (own group `petrom-stergere-*`, 30 kept,
+  never pushes out run backups), DB row only, PDF stays.
+- Success messages are green (`--status-success`), also for automation runs with no errors.
+- Open: at 1280px wide the top bar wraps "Ecran complet" onto a second line (fine, user may revisit).
 
 Decisions from M4 (2026-11-07, user approved):
 - % is rounded down (999,99 of 1.000 shows 99%, never 100% without PESTE LIMITĂ).
@@ -37,6 +49,12 @@ Notes from the M1 review:
 - Two copies started within milliseconds could both pass the port check on Windows. M3's run lock is the backstop.
 
 ## Last update
+2026-11-07 — M5 done: `firme.py` (add, edit, archive, restore, month invoices, delete), `firme_routes.py`
+(7 JSON routes behind the origin guard), `cui.py` (shared CUI cleanup), add/edit/archived/confirm windows
+(`firme.js`), green success box, focus kept for keyboard users. 330 tests green incl. 24 Playwright tests.
+code-reviewer PASS after 5 rounds (user approved rounds 3–4) plus a /code-review pass. User checked all
+8 steps on screen with fake data.
+
 2026-11-07 — M4 done: `dashboard.month_rows` (month total, max carried forward, exact-bani colour levels,
 % rounded down), `money.format_lei`, `GET /date`, and the page (sort, search, rows per page fitted to the
 window, pager with "…", Romanian clock, month switch at midnight, full screen, Rulează button with result

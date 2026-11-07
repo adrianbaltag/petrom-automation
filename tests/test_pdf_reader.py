@@ -266,3 +266,15 @@ def test_read_pdf_footer_cui_is_not_taken_when_buyer_cui_missing(tmp_path):
     with pytest.raises(InvoiceError) as excinfo:
         read_invoice(build_pdf(tmp_path / "f.pdf", items))
     assert reason_of(excinfo) == pdf_reader.NO_CUI
+
+
+def test_parse_cui_with_leading_zeros_is_saved_without_them():
+    buyer = BUYER_TEXT.replace("RO 12345678", "RO 0012345678")
+    assert parse_invoice_text(buyer, FULL_TEXT).cui == "12345678"
+
+
+def test_parse_cui_of_only_zeros_counts_as_missing():
+    buyer = BUYER_TEXT.replace("RO 12345678", "RO 0000")
+    with pytest.raises(InvoiceError) as excinfo:
+        parse_invoice_text(buyer, FULL_TEXT)
+    assert reason_of(excinfo) == pdf_reader.NO_CUI

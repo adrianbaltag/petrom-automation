@@ -47,14 +47,15 @@ ORDER BY f.nume
 """
 
 
-def _has_max(max_bani):
+def has_max(max_bani):
+    """True if the max can give a % (also used by firme.update_company)."""
     # A max of 0 can't give a %. M5 will refuse it on input; until then it counts as unset.
     return max_bani is not None and max_bani > 0
 
 
 def status_for(total_bani, max_bani):
     """Colour level for a month total against its max."""
-    if not _has_max(max_bani):
+    if not has_max(max_bani):
         return STATUS_UNSET
     if total_bani >= max_bani:
         return STATUS_OVER
@@ -67,7 +68,7 @@ def status_for(total_bani, max_bani):
 
 def percent_of_max(total_bani, max_bani):
     """Whole % of the max, rounded down (99,99% shows as 99%). None if there is no max."""
-    if not _has_max(max_bani):
+    if not has_max(max_bani):
         return None
     return total_bani * 100 // max_bani
 
@@ -108,7 +109,14 @@ def month_rows(conn, luna):
                 "eticheta": LABELS[status],
                 "suma_text": format_lei(total),
                 "max_text": format_lei(max_bani) if has_max else LABELS[STATUS_UNSET],
+                # The edit form's max box: the same format without "lei", empty if unset.
+                "max_input": format_lei(max_bani, suffix=False) if has_max else "",
                 "procent_text": f"{percent}%" if has_max else "—",
             }
         )
     return rows
+
+
+def archived_count(conn):
+    """How many companies are archived: the page shows "Firme arhivate (N)" when N > 0."""
+    return conn.execute("SELECT COUNT(*) FROM firme WHERE arhivat = 1").fetchone()[0]

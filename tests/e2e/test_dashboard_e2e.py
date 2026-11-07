@@ -5,36 +5,17 @@ The app runs on a real local web server with a temporary data folder, and Chromi
 
 import json
 import re
-import threading
 from datetime import date, datetime, time, timedelta
 
 import pytest
 from db_helpers import open_db
 from fake_invoice import make_invoice_pdf
 from playwright.sync_api import expect
-from werkzeug.serving import make_server
 
-from petrom_dashboard import create_app
 from petrom_dashboard.dashboard import current_month, month_label
 
 MONTH = current_month()
 MAX = 1000_00
-
-
-@pytest.fixture()
-def server_app(data_dir):
-    return create_app({"TESTING": True, "DATA_DIR": data_dir})
-
-
-@pytest.fixture()
-def live_url(server_app):
-    """Serve the app on a free port of 127.0.0.1 while the test runs."""
-    server = make_server("127.0.0.1", 0, server_app, threaded=True)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    yield f"http://127.0.0.1:{server.server_port}"
-    server.shutdown()
-    thread.join()
 
 
 def add_company(conn, cui, nume, total_bani=0, max_bani=MAX):
@@ -59,7 +40,7 @@ def four_companies(server_app):
 
 
 def names(page):
-    return page.locator("#tabel tbody tr td:first-child").all_inner_texts()
+    return page.locator("#tabel tbody tr .nume-text").all_inner_texts()
 
 
 def test_rows_are_sorted_by_percent_with_colour_and_label(page, live_url, four_companies):
@@ -86,7 +67,7 @@ def test_header_click_resorts_and_unset_stays_last(page, live_url, four_companie
     page.goto(live_url)
     expect(page.locator("#tabel tbody tr")).to_have_count(4)
 
-    page.get_by_role("button", name="Firmă").click()
+    page.get_by_role("button", name="Firmă", exact=True).click()
     assert names(page) == ["ALFA SRL", "BETA SRL", "DELTA SRL", "GAMA SRL"]
 
     page.get_by_role("button", name="% din max").click()
@@ -227,7 +208,7 @@ def test_later_milestone_buttons_are_hidden(page, live_url):
     page.goto(live_url)
 
     expect(page.get_by_role("button", name="Ecran complet")).to_be_visible()
-    expect(page.get_by_role("button", name="Adaugă firmă")).to_have_count(0)
+    expect(page.get_by_role("button", name="Adaugă firmă")).to_be_visible()  # arrived in M5
     expect(page.get_by_role("button", name="Setări")).to_have_count(0)
 
 

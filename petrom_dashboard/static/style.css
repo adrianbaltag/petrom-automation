@@ -15,6 +15,9 @@
   --status-warning: #FCE8D2;
   --status-critical: #F9D6D4;
   --status-unset: #ECEBE8;
+  --status-success: #DCF0DD;  /* result box after something worked */
+
+  --backdrop: #1C1C1A73;  /* behind an open window: dims the page */
 
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --size-body: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);
@@ -46,6 +49,9 @@
     --status-warning: #4A3218;
     --status-critical: #4F2220;
     --status-unset: #2C2C2A;
+    --status-success: #1F3D26;
+
+    --backdrop: #000000A6;
   }
 }
 
@@ -176,6 +182,10 @@ body {
   display: none;
 }
 
+.rezultat[data-tip="ok"] {
+  background: var(--status-success);
+}
+
 .rezultat[data-tip="atentie"] {
   background: var(--status-warning);
 }
@@ -286,6 +296,176 @@ body {
   color: var(--text-muted);
 }
 
+/* Company name cell: the name is cut short with "…", the Editează button never is. */
+.nume-cel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.nume-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-editeaza {
+  flex-shrink: 0;
+  border-color: var(--text-muted);  /* 3:1 or more on every row colour */
+  display: inline-flex;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+/* "Firme arhivate (N)": looks like a link, works like a button. */
+.link-buton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-buton[hidden] {
+  display: none;
+}
+
+/* Windows (add, edit, archived, confirm) */
+.fereastra {
+  width: min(34rem, calc(100% - 2 * var(--space-4)));
+  max-height: calc(100% - 2 * var(--space-4));
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  overflow-y: auto;
+}
+
+.fereastra-mica {
+  width: min(26rem, calc(100% - 2 * var(--space-4)));
+}
+
+.fereastra::backdrop {
+  background: var(--backdrop);
+}
+
+.fereastra h2 {
+  margin: 0;
+  font-size: var(--size-title);
+  text-wrap: balance;
+}
+
+.fereastra h3 {
+  margin: 0;
+  font-size: var(--size-body);
+}
+
+.formular {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.formular p {
+  margin: 0;
+}
+
+.formular label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-weight: 600;
+}
+
+.formular input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.ajutor {
+  color: var(--text-muted);
+}
+
+.form-eroare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--status-critical);
+}
+
+.form-eroare[hidden] {
+  display: none;
+}
+
+.butoane {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.sectiune {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.sectiune p:empty {
+  display: none;
+}
+
+.sectiune p {
+  margin: 0;
+}
+
+.sectiune > .btn {
+  align-self: flex-start;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.lista-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lista-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Narrow window (phone): keep company, amount, % and status; CUI and max are dropped. */
 @media (max-width: 640px) {
   .topbar,
@@ -309,6 +489,11 @@ body {
   .tabel th,
   .tabel td {
     padding-inline: var(--space-2);
+  }
+
+  /* Only the pencil on a phone; the button keeps its full name for screen readers. */
+  .editeaza-text {
+    display: none;
   }
 
   .col-nume { width: 32%; }

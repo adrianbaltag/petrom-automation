@@ -189,19 +189,23 @@ def _copy_then_delete(src, dest):
         raise
 
 
-def backup_database(db_file, backup_dir, keep=BACKUPS_KEPT):
-    """Copy the database to backup_dir/petrom-YYYYMMDD-HHMMSS-micro.db; keep the newest `keep`.
+def backup_database(db_file, backup_dir, keep=BACKUPS_KEPT, prefix="petrom"):
+    """Copy the database to backup_dir/<prefix>-YYYYMMDD-HHMMSS-micro.db; keep the newest
+    `keep` with that prefix.
 
+    Each prefix is its own group: run backups ("petrom-2026...") and invoice-delete backups
+    ("petrom-stergere-2026...") never push each other out.
     Uses SQLite's own backup, which is safe even while the database is open.
     """
     backup_dir = Path(backup_dir)
     backup_dir.mkdir(parents=True, exist_ok=True)
-    target = backup_dir / f"petrom-{datetime.now():%Y%m%d-%H%M%S-%f}.db"
+    target = backup_dir / f"{prefix}-{datetime.now():%Y%m%d-%H%M%S-%f}.db"
     with closing(sqlite3.connect(db_file)) as src, closing(sqlite3.connect(target)) as dst:
         src.backup(dst)
     logger.info("Database backed up to %s", target)
 
-    backups = sorted(backup_dir.glob("petrom-*.db"))  # names sort oldest first
+    # "[0-9]" right after the prefix: "petrom-[0-9]*" does not match "petrom-stergere-...".
+    backups = sorted(backup_dir.glob(f"{prefix}-[0-9]*.db"))  # names sort oldest first
     for old in backups[:-keep]:
         try:
             old.unlink()

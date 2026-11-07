@@ -14,6 +14,7 @@
            aria-label="Caută firmă sau CUI" autocomplete="off">
     <span class="spatiu"></span>
     <span id="ceas" class="ceas"></span>
+    <button id="adauga" class="btn" type="button">Adaugă firmă</button>
     <button id="ruleaza" class="btn btn-principal" type="button">Rulează automatizarea</button>
     <button id="ecran" class="btn" type="button">Ecran complet</button>
   </header>
@@ -49,9 +50,90 @@
       <span id="numere-pagini" class="numere-pagini"></span>
       <button id="inainte" class="btn btn-mic" type="button" aria-label="Pagina următoare">›</button>
     </nav>
+    <button id="arhivate" class="link-buton" type="button" hidden></button>
     <span id="paginare-info" class="paginare-info" aria-live="polite"></span>
   </footer>
 
+  <!-- Add a company -->
+  <dialog id="dialog-adauga" class="fereastra" aria-labelledby="adauga-titlu">
+    <form id="form-adauga" class="formular" novalidate>
+      <h2 id="adauga-titlu">Adaugă firmă</h2>
+      <label>CUI
+        <input name="cui" type="text" inputmode="numeric" autocomplete="off" required
+               aria-describedby="adauga-cui-ajutor">
+      </label>
+      <p id="adauga-cui-ajutor" class="ajutor">Cu sau fără RO, de exemplu RO46133455.</p>
+      <label>Nume firmă
+        <input name="nume" type="text" maxlength="200" autocomplete="off" required>
+      </label>
+      <label>Max lunar (lei, opțional)
+        <input name="max" type="text" inputmode="decimal" autocomplete="off"
+               aria-describedby="adauga-max-ajutor">
+      </label>
+      <p id="adauga-max-ajutor" class="ajutor">Lasă gol dacă nu îl știi încă. Exemple: 5000 sau 5.000,00.</p>
+      <div class="form-eroare" role="alert" hidden></div>
+      <div class="butoane">
+        <button type="button" class="btn" data-inchide>Anulează</button>
+        <button type="submit" class="btn btn-principal">Salvează</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Edit one company: name, max, this month's invoices, archive -->
+  <dialog id="dialog-firma" class="fereastra" aria-labelledby="firma-titlu">
+    <form id="form-firma" class="formular" novalidate>
+      <h2 id="firma-titlu">Editează firma</h2>
+      <p class="ajutor">CUI: <span id="firma-cui"></span></p>
+      <label>Nume firmă
+        <input name="nume" type="text" maxlength="200" autocomplete="off" required>
+      </label>
+      <label>Max lunar (lei)
+        <input name="max" type="text" inputmode="decimal" autocomplete="off"
+               aria-describedby="firma-max-ajutor">
+      </label>
+      <p id="firma-max-ajutor" class="ajutor">Noul max se aplică din luna aceasta înainte. Lunile trecute rămân cum erau.</p>
+      <div class="form-eroare" role="alert" hidden></div>
+      <div class="butoane">
+        <button type="button" class="btn" data-inchide>Închide</button>
+        <button type="submit" class="btn btn-principal">Salvează</button>
+      </div>
+    </form>
+    <section class="sectiune" aria-labelledby="facturi-titlu">
+      <h3 id="facturi-titlu" tabindex="-1">Facturi</h3>
+      <p id="facturi-stare" class="ajutor" role="status" aria-live="polite"></p>
+      <ul id="facturi-lista" class="lista"></ul>
+    </section>
+    <section class="sectiune">
+      <button id="arhiveaza" type="button" class="btn">Arhivează firma</button>
+    </section>
+  </dialog>
+
+  <!-- Archived companies, with Restaurează (moves into Setări in M7) -->
+  <dialog id="dialog-arhivate" class="fereastra" aria-labelledby="arhivate-titlu">
+    <div class="formular">
+      <h2 id="arhivate-titlu">Firme arhivate</h2>
+      <p class="ajutor">Nu apar în tabel, dar istoricul lor e păstrat. O firmă revine singură când vine o factură nouă pentru ea.</p>
+      <ul id="arhivate-lista" class="lista"></ul>
+      <div class="form-eroare" role="alert" hidden></div>
+      <div class="butoane">
+        <button type="button" class="btn" data-inchide>Închide</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- "Are you sure?" for delete and archive -->
+  <dialog id="dialog-confirma" class="fereastra fereastra-mica" aria-labelledby="confirma-titlu">
+    <form method="dialog" class="formular">
+      <h2 id="confirma-titlu"></h2>
+      <p id="confirma-text"></p>
+      <div class="butoane">
+        <button value="nu" class="btn">Anulează</button>
+        <button value="da" id="confirma-da" class="btn btn-principal"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="{{ url_for('static', filename='firme.js') }}" defer></script>
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>
 </html>
