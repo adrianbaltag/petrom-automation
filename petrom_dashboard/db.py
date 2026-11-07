@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS facturi (
                  CHECK (typeof(total_bani) = 'integer'),  -- 199.29 by mistake is refused
     fisier       TEXT    NOT NULL,              -- original file name
     amprenta     TEXT    NOT NULL UNIQUE,       -- file fingerprint: same PDF can't count twice
+    numar        TEXT    NOT NULL UNIQUE,       -- invoice number: a re-downloaded copy can't count
+    mutat        INTEGER NOT NULL DEFAULT 0,    -- 1 = the PDF reached Facturi-procesate
     procesat_la  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 

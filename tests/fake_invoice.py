@@ -68,3 +68,28 @@ def build_pdf(path, items, font_file=None):
         pdf.text(x, y, text)
     pdf.output(str(path))
     return path
+
+
+def make_invoice_pdf(
+    path,
+    cui=FAKE_BUYER_CUI,
+    nume="FIRMA TEST S.R.L.",
+    numar="109000000000001",
+    total="199.89",
+    data="05.06.2026",
+):
+    """Write a sample-like invoice PDF with the given buyer, number, total and date."""
+    swaps = {
+        f"C.U.I./C.I.F.: RO {FAKE_BUYER_CUI}": f"C.U.I./C.I.F.: RO {cui}",
+        "Cumparator: FIRMA TEST S.R.L.": f"Cumparator: {nume}",
+        "Aferenta facturii cu nr.: 109000000000001": f"Aferenta facturii cu nr.: {numar}",
+        "05.06.2026": data,
+        "Total de plata: 199.89": f"Total de plata: {total}",
+    }
+    items = []
+    for x, y, text in sample_like_items():
+        if x == 30 and "C.U.I." in text:  # the supplier's CUI line stays as it is
+            items.append((x, y, text))
+            continue
+        items.append((x, y, swaps.get(text, text)))
+    return build_pdf(Path(path), items)

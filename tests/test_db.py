@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+from db_helpers import open_db
 
 from petrom_dashboard.db import connect, init_db
 
@@ -26,11 +27,11 @@ def test_creates_the_four_tables(conn):
 def test_init_twice_keeps_existing_data(tmp_path):
     db_file = tmp_path / "petrom.db"
     init_db(db_file)
-    with connect(db_file) as conn:
+    with open_db(db_file) as conn:
         conn.execute("INSERT INTO firme (cui, nume) VALUES ('46133455', 'ALFA SRL')")
     init_db(db_file)
 
-    with connect(db_file) as conn:
+    with open_db(db_file) as conn:
         assert conn.execute("SELECT COUNT(*) FROM firme").fetchone()[0] == 1
 
 
@@ -52,13 +53,13 @@ def test_one_max_per_company_per_month(conn):
 def test_same_pdf_fingerprint_cannot_be_saved_twice(conn):
     conn.execute("INSERT INTO firme (id, cui, nume) VALUES (1, '46133455', 'ALFA SRL')")
     insert = (
-        "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta) "
-        "VALUES (1, '2026-06-05', 19929, ?, 'abc123')"
+        "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta, numar) "
+        "VALUES (1, '2026-06-05', 19929, ?, 'abc123', ?)"
     )
-    conn.execute(insert, ("Factura_1.pdf",))
+    conn.execute(insert, ("Factura_1.pdf", "109000000000001"))
 
     with pytest.raises(sqlite3.IntegrityError):
-        conn.execute(insert, ("Factura_1 (copie).pdf",))
+        conn.execute(insert, ("Factura_1 (copie).pdf", "109000000000002"))
 
 
 def test_invoice_total_must_be_whole_bani(conn):
@@ -66,8 +67,8 @@ def test_invoice_total_must_be_whole_bani(conn):
 
     with pytest.raises(sqlite3.IntegrityError):
         conn.execute(
-            "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta) "
-            "VALUES (1, '2026-06-05', 199.29, 'Factura_1.pdf', 'abc123')"
+            "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta, numar) "
+            "VALUES (1, '2026-06-05', 199.29, 'Factura_1.pdf', 'abc123', '109000000000001')"
         )
 
 
@@ -81,6 +82,28 @@ def test_monthly_max_must_be_whole_bani(conn):
 def test_invoice_must_belong_to_an_existing_company(conn):
     with pytest.raises(sqlite3.IntegrityError):
         conn.execute(
-            "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta) "
-            "VALUES (999, '2026-06-05', 19929, 'Factura_1.pdf', 'abc123')"
+            "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta, numar) "
+            "VALUES (999, '2026-06-05', 19929, 'Factura_1.pdf', 'abc123', '109000000000001')"
         )
+
+
+def test_same_invoice_number_cannot_be_saved_twice(conn):
+    conn.execute("INSERT INTO firme (id, cui, nume) VALUES (1, '46133455', 'ALFA SRL')")
+    insert = (
+        "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta, numar) "
+        "VALUES (1, '2026-06-05', 19929, 'f.pdf', ?, '109063201010976')"
+    )
+    conn.execute(insert, ("hash-one",))
+
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(insert, ("hash-two",))
+
+
+def test_new_invoice_starts_as_not_moved(conn):
+    conn.execute("INSERT INTO firme (id, cui, nume) VALUES (1, '46133455', 'ALFA SRL')")
+    conn.execute(
+        "INSERT INTO facturi (firma_id, data_factura, total_bani, fisier, amprenta, numar) "
+        "VALUES (1, '2026-06-05', 19929, 'f.pdf', 'abc', '109000000000001')"
+    )
+
+    assert conn.execute("SELECT mutat FROM facturi").fetchone()[0] == 0
